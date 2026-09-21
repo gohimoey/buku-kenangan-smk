@@ -28,29 +28,22 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          flutter-version: '3.24.0'
           channel: 'stable'
 
-      - name: Install dependencies
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
+      - name: Clean & Get Dependencies
         run: |
+          flutter clean
           flutter pub get
 
-      # Download fonts
-      - name: Download Google Fonts
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip
-          wget -q https://github.com/google/fonts/raw/mainOFL.zip
-          unzip -q -o github.com/google/fonts/raw/mainOFL.zip -d $HOME/.local/share/fonts
-          fc-cache -f
-
       - name: Build APK (Debug)
-        run: |
-          flutter build apk --debug --split-debug-info=/tmp/symbols
+        run: flutter build apk --debug --split-debug-info=/tmp/symbols
 
       - name: Build APK (Release)
-        run: |
-          flutter build apk --release --split-debug-info=/tmp/symbols
+        run: flutter build apk --release --split-debug-info=/tmp/symbols
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
@@ -65,22 +58,27 @@ jobs:
           path: build/app/outputs/flutter-apk/release/app-release.apk
 
       - name: Create GitHub Release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v1
         with:
-          name: Release v${{ github.run_number }}
+          name: Release v${{ github.run_number }} - buku-kenangan-smk
           body: |
-            ## Buku Kenangan SMK Ihyaul Ulum
+            ## Buku Kenangan SMK Ihyaul Ulum v2.0.1
             
-            Versi build otomatis dari GitHub Actions.
+            ✅ **Profil SMK** - Halaman info sekolah  
+            ✅ **Perjurusan** - TKJ, TKR, PBS detail  
+            ✅ **BottomNavigationBar** - Navigasi 3 tab  
+            ✅ **SQLite Local** - Simpan kenangan dengan foto
             
-            ### Cara Pasang:
-            1. Unduh file `app-release.apk`
-            2. Buka file dengan File Manager / Explorers
-            3. Pasang dengan mengetuknya (pastikan 'Sumber tidak dikenal' aktif)
+            ### Instalasi:
+            1. Unduh `app-release.apk` di bawah
+            2. Buka file > Pasang (aktifkan "Sumber tidak dikenal")
             
             ### Changelog:
-            - Build ${{ github.run_number }} - ${{ github.sha }}
+            - Tambah halaman Profil (Alamat, Telepon, Email, Website)
+            - Tambah halaman Perjurusan (TKJ, TKR, PBS dengan skill detail)
+            - Tambah BottomNavigation untuk berpindah halaman
+            - Update pubspec.yaml dependencies: path_provider, sqflite, path
           files: |
             build/app/outputs/flutter-apk/release/app-release.apk
         env:
