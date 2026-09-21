@@ -5,53 +5,53 @@ on:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-24.04  # cmake built-in, ninja via apt
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: 🛠️ Install System Deps
+      - name: Install Deps
         run: sudo apt-get update && sudo apt-get install -y ninja-build unzip
 
-      - name: 🛠️ Setup Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'  # stable, proven
+          flutter-version: '3.19.6'
           channel: 'stable'
 
-      - name: 💾 Backup sources
+      - name: Backup custom sources
         run: |
-          mkdir -p /tmp/backup
-          cp -r lib/ /tmp/backup/
-          cp pubspec.yaml /tmp/backup/
-          rm -rf lib/ pubspec.yaml
+          cp -r lib/ /tmp/lib_backup/
+          cp pubspec.yaml /tmp/pubspec_backup.yaml
 
-      - name: 🏗️ Create Android skeleton
+      - name: Clean and Generate Android
         run: |
+          rm -rf lib/ pubspec.yaml .metadata .gitignore
           flutter create --org com.smkiuh .
-          cp -f /tmp/backup/pubspec.yaml .
-          cp -rf /tmp/backup/lib/ ./lib/
 
-      - name: 🔧 Install dependencies
+      - name: Restore custom sources
         run: |
-          flutter pub get || echo "deps ok"
+          rm -rf lib/ pubspec.yaml
+          cp -r /tmp/lib_backup/ lib/
+          cp /tmp/pubspec_backup.yaml pubspec.yaml
 
-      - name: 🧪 Build APK
+      - name: Resolve Dependencies
+        run: flutter pub get || echo "dependencies resolved"
+
+      - name: Build APK (Release)
         run: |
-          flutter build apk --release \
-            --build-number=${{ github.run_number }} \
-            --build-name=1.0.${{ github.run_number }}
+          flutter build apk --release --build-number=${{ github.run_number }}
 
-      - name: 📤 Upload artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: 🏷️ Create Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: buku-kenangan-v${{ github.run_number }}
-          name: Buku Kenangan SMK IHYAUL ULUM v1.0
+          name: Buku Kenangan SMK IHYAUL ULUM
           files: build/app/outputs/flutter-apk/app-release.apk
           generate_release_notes: true
         env:
