@@ -11,6 +11,9 @@ on:
       - master
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
@@ -18,6 +21,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Install unzip
         run: sudo apt-get update && sudo apt-get install -y unzip
@@ -60,15 +65,7 @@ jobs:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Create Git Tag
-        if: github.event_name != 'pull_request'
-        run: bash scripts/create-release.sh
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
-
-      - name: Create GitHub Release
+      - name: Create Git Tag & GitHub Release
         if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v1
         with:
@@ -93,8 +90,7 @@ jobs:
             - Update pubspec.yaml dependencies: path_provider, sqflite, path
           files: |
             build/app/outputs/flutter-apk/app-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Notify n8n Webhook
         if: always()
