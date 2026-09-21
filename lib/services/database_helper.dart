@@ -1,5 +1,6 @@
 // Database helper untuk simpan kenangan
-import 'dart:io';
+
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/memory.dart';
@@ -19,7 +20,7 @@ class DatabaseHelper {
 
   Future<Database> initDB() async {
     final dir = await getApplicationDocumentsDirectory();
-    final path = '${dir.path}/buku_kenangan.db';
+    final path = join(dir.path, 'buku_kenangan.db');
 
     return await openDatabase(
       path,
@@ -49,9 +50,6 @@ class DatabaseHelper {
 
   Future<List<Memory>> getAllMemories({String? filterClass}) async {
     final dbClient = await db;
-    final Map<String, dynamic>.where = filterClass != null
-        ? where('classNumber = ?', args: [filterClass])
-        : const {};
 
     final List<Map<String, dynamic>> maps = await dbClient.query(
       'memories',

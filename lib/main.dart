@@ -1,11 +1,15 @@
 // Buku Kenangan SMK IHYAUL ULUM v2.0
 // Fitur: Kelas 10/11/12, Jurusan TKJ/TKR/PBS, Foto, Alamat, Nomor HP
+// Fitur baru: Halaman Profil, Halaman Perjurusan
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'models/memory.dart';
 import 'services/database_helper.dart';
+import 'screens/profile_screen.dart';
+import 'screens/majors_screen.dart';
 
 void main() => runApp(const BukuKenanganApp());
 
@@ -20,18 +24,19 @@ class BukuKenanganApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const MainScreen(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
   late Future<List<Memory>> memoriesFuture;
   final db = DatabaseHelper();
 
@@ -57,30 +62,22 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Text('Filter by:'),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx, 'all');
-              },
+              onPressed: () => Navigator.pop(ctx, 'all'),
               icon: const Icon(Icons.list),
               label: const Text('Semua Kelas & Jurusan'),
             ),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx, '10');
-              },
+              onPressed: () => Navigator.pop(ctx, '10'),
               icon: const Icon(Icons.school),
               label: const Text('Kelas 10'),
             ),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx, '11');
-              },
+              onPressed: () => Navigator.pop(ctx, '11'),
               icon: const Icon(Icons.school),
               label: const Text('Kelas 11'),
             ),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx, '12');
-              },
+              onPressed: () => Navigator.pop(ctx, '12'),
               icon: const Icon(Icons.school),
               label: const Text('Kelas 12'),
             ),
@@ -97,8 +94,13 @@ class _HomeScreenState extends State<HomeScreen> {
     ).then((_) => _loadMemories());
   }
 
-  @override
-  Widget build(BuildContext context) {
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _buildHomeTab() {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Buku Kenangan SMK IHYAUL ULUM'),
@@ -174,6 +176,38 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildHomeTab(),
+          const MajorsScreen(),
+          const ProfileScreen(),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.photo_library),
+            label: 'Beranda',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.list),
+            label: 'Perjurusan',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person),
+            label: 'Profil',
+          ),
+        ],
       ),
     );
   }

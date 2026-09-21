@@ -1,7 +1,7 @@
 name: buku_kenangan_smk
 description: Buku Kenangan SMK IHYAUL ULUM v2 - Kelas 10/11/12, Jurusan TKJ/TKR/PBS, Foto, Alamat, Nomor HP
 publish_to: 'none'
-version: 2.0.0+1
+version: 2.0.1+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -13,6 +13,9 @@ dependencies:
   cupertino_icons: 1.0.6
   image_picker: 1.1.1
   intl: 0.19.0
+  path_provider: 2.1.5
+  sqflite: 2.3.0
+  path: 1.9.0
 
 dev_dependencies:
   flutter_test:
