@@ -52,18 +52,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
-          path: build/app/outputs/flutter-apk/debug/app-debug.apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/release/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Create Git Tag
+        if: github.event_name == 'push'
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git tag "v${GITHUB_RUN_NUMBER}" || true
+          git push origin "v${GITHUB_RUN_NUMBER}" || true
 
       - name: Create GitHub Release
         if: github.event_name == 'push'
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v${{ github.run_number }}
           name: Release v${{ github.run_number }} - buku-kenangan-smk
           body: |
             ## Buku Kenangan SMK Ihyaul Ulum v2.0.1
@@ -83,12 +92,12 @@ jobs:
             - Tambah BottomNavigation untuk berpindah halaman
             - Update pubspec.yaml dependencies: path_provider, sqflite, path
           files: |
-            build/app/outputs/flutter-apk/release/app-release.apk
+            build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify n8n Webhook
-        if: github.event_name == 'push'
+        if: always()
         run: |
           RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${GITHUB_RUN_NUMBER}"
           curl -X POST \
