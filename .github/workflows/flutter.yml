@@ -3,6 +3,10 @@ name: Build & Release APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-24.04
@@ -56,6 +60,6 @@ jobs:
           name: Buku Kenangan SMK IHYAUL ULUM
           files: build/app/outputs/flutter-apk/app-release.apk
           generate_release_notes: true
+          fail_on_tag_exists: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
