@@ -1,83 +1,284 @@
-// Buku Kenangan SMK IHYAUL ULUM
+// Buku Kenangan SMK IHYAUL ULUM v2.0
+// Fitur: Kelas 10/11/12, Jurusan TKJ/TKR/PBS, Foto, Alamat, Nomor HP
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'models/memory.dart';
+import 'services/database_helper.dart';
 
 void main() => runApp(const BukuKenanganApp());
 
 class BukuKenanganApp extends StatelessWidget {
   const BukuKenanganApp({super.key});
-  
+
   @override
-  Widget build(BuildContext context) => MaterialApp(
-    title: 'Buku Kenangan IHYAUL ULUM',
-    theme: ThemeData(primarySwatch: Colors.blue),
-    home: const HomeScreen(),
-  );
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Buku Kenangan SMK IHYAUL ULUM',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+      ),
+      home: const HomeScreen(),
+    );
+  }
 }
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-  
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Map<String, dynamic>> memories = [];
-  
-  void _addMemory(String title, String desc) {
+  late Future<List<Memory>> memoriesFuture;
+  final db = DatabaseHelper();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMemories();
+  }
+
+  void _loadMemories() {
     setState(() {
-      memories.add({'title': title, 'desc': desc, 'date': DateTime.now()});
+      memoriesFuture = db.getAllMemories();
     });
   }
-  
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Buku Kenangan')),
-    body: memories.isEmpty 
-      ? const Center(child: Text('Tap + untuk tambah kenangan'))
-      : ListView.builder(
-          itemCount: memories.length,
-          itemBuilder: (_, i) => ListTile(
-            title: Text(memories[i]['title']),
-            subtitle: Text(memories[i]['desc']),
-            trailing: Text(memories[i]['date'].toString().split(' ')[0]),
-          ),
+
+  void _showFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Filter Memories'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Filter by:'),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx, 'all');
+              },
+              icon: const Icon(Icons.list),
+              label: const Text('Semua Kelas & Jurusan'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx, '10');
+              },
+              icon: const Icon(Icons.school),
+              label: const Text('Kelas 10'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx, '11');
+              },
+              icon: const Icon(Icons.school),
+              label: const Text('Kelas 11'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx, '12');
+              },
+              icon: const Icon(Icons.school),
+              label: const Text('Kelas 12'),
+            ),
+          ],
         ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: () => showDialog(context: context, builder: (_) => _AddDialog(onAdd: _addMemory)),
-      child: const Icon(Icons.add),
-    ),
-  );
+      ),
+    );
+  }
+
+  void _openAddMemory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (ctx) => const AddMemoryScreen()),
+    ).then((_) => _loadMemories());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Buku Kenangan SMK IHYAUL ULUM'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_alt),
+            onPressed: _showFilterDialog,
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAddMemory,
+        child: const Icon(Icons.add),
+      ),
+      body: FutureBuilder<List<Memory>>(
+        future: memoriesFuture,
+        builder: (ctx, snap) {
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final memories = snap.data ?? [];
+          if (memories.isEmpty) {
+            return const Center(child: Text('Belum ada kenangan. Tambahkan satu!'));
+          }
+          return ListView.builder(
+            itemCount: memories.length,
+            itemBuilder: (ctx, i) => Card(
+              margin: const EdgeInsets.all(8),
+              child: ListTile(
+                leading: memories[i].imagePath.isNotEmpty
+                    ? Image.file(
+                        File(memories[i].imagePath),
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      )
+                    : const Icon(Icons.photo, size: 50),
+                title: Text(memories[i].title),
+                subtitle: Text(
+                  '${memories[i].classNumber} ${memories[i].major} • ${DateFormat("dd MMM yyyy").format(memories[i].date)}',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  showDialog(
+                    context: ctx,
+                    builder: (_) => AlertDialog(
+                      title: Text(memories[i].title),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (memories[i].imagePath.isNotEmpty)
+                            Image.file(File(memories[i].imagePath)),
+                          const SizedBox(height: 8),
+                          Text(memories[i].description),
+                          const Divider(),
+                          Text('Kelas: ${memories[i].classNumber}'),
+                          Text('Jurusan: ${memories[i].major}'),
+                          Text('Alamat: ${memories[i].address}'),
+                          Text('HP: ${memories[i].phoneNumber}'),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Close'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
-class _AddDialog extends StatefulWidget {
-  final void Function(String, String) onAdd;
-  const _AddDialog({required this.onAdd});
-  
+class AddMemoryScreen extends StatefulWidget {
+  const AddMemoryScreen({super.key});
   @override
-  State<_AddDialog> createState() => _AddDialogState();
+  State<AddMemoryScreen> createState() => _AddMemoryScreenState();
 }
 
-class _AddDialogState extends State<_AddDialog> {
-  final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  
+class _AddMemoryScreenState extends State<AddMemoryScreen> {
+  final _formKey = GlobalKey<FormState>();
+  String _title = '',
+      _desc = '',
+      _classNum = '11',
+      _major = 'TKJ',
+      _address = '',
+      _phone = '',
+      _imagePath = '';
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final img = await picker.pickImage(source: ImageSource.gallery);
+    if (img != null) {
+      setState(() => _imagePath = img.path);
+    }
+  }
+
+  void _save() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final mem = Memory(
+        id: DateTime.now().millisecondsSinceEpoch,
+        title: _title,
+        description: _desc,
+        imagePath: _imagePath,
+        date: DateTime.now(),
+        classNumber: _classNum,
+        major: _major,
+        address: _address,
+        phoneNumber: _phone,
+      );
+      DatabaseHelper().insertMemory(mem);
+      Navigator.pop(context);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Tambah Kenangan'),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Judul')),
-        TextField(controller: _descCtrl, decoration: const InputDecoration(labelText: 'Deskripsi'), maxLines: 3),
-      ],
-    ),
-    actions: [
-      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
-      TextButton(onPressed: () {
-        widget.onAdd(_titleCtrl.text, _descCtrl.text);
-        Navigator.pop(context);
-      }, child: const Text('Simpan')),
-    ],
-  );
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Tambah Kenangan')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(children: [
+            TextFormField(
+              decoration: const InputDecoration(labelText: 'Judul'),
+              validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+              onSaved: (v) => _title = v!,
+            ),
+            TextFormField(
+              decoration: const InputDecoration(labelText: 'Deskripsi'),
+              maxLines: 3,
+              onSaved: (v) => _desc = v!,
+            ),
+            DropdownButtonFormField<String>(
+              value: _classNum,
+              items: ['10', '11', '12'].map((c) => DropdownMenuItem(value: c, child: Text('Kelas $c'))).toList(),
+              onChanged: (v) => setState(() => _classNum = v!),
+              decoration: const InputDecoration(labelText: 'Kelas'),
+            ),
+            DropdownButtonFormField<String>(
+              value: _major,
+              items: ['TKJ', 'TKR', 'PBS'].map((m) => DropdownMenuItem(value: m, child: Text('Jurusan $m'))).toList(),
+              onChanged: (v) => setState(() => _major = v!),
+              decoration: const InputDecoration(labelText: 'Jurusan'),
+            ),
+            TextFormField(
+              decoration: const InputDecoration(labelText: 'Alamat'),
+              onSaved: (v) => _address = v ?? '',
+            ),
+            TextFormField(
+              decoration: const InputDecoration(labelText: 'Nomor HP'),
+              keyboardType: TextInputType.phone,
+              onSaved: (v) => _phone = v ?? '',
+            ),
+            const SizedBox(height: 16),
+            _imagePath.isEmpty
+                ? const Text('Foto tidak dipilih')
+                : Image.file(File(_imagePath), height: 150),
+            TextButton.icon(
+              onPressed: _pickImage,
+              icon: const Icon(Icons.photo_library),
+              label: const Text('Pilih Foto'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _save,
+              child: const Text('Simpan Kenangan'),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
 }
