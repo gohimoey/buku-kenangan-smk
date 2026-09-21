@@ -23,23 +23,25 @@ jobs:
           cp -r lib/ /tmp/lib_backup/
           cp pubspec.yaml /tmp/pubspec_backup.yaml
 
-      - name: Clean and Generate Android
+      - name: Generate Android skeleton
         run: |
-          rm -rf lib/ pubspec.yaml .metadata .gitignore
-          flutter create --org com.smkiuh .
-
-      - name: Restore custom sources
-        run: |
-          rm -rf lib/ pubspec.yaml
+          # Create fresh Flutter project in temp
+          flutter create --org com.smkiuh /tmp/flutter_proj
+          # Copy Android + necessary files
+          cp -r /tmp/flutter_proj/android ./android
+          cp /tmp/flutter_proj/.gitignore .
+          cp /tmp/flutter_proj/.metadata .
+          cp /tmp/flutter_proj/.flutter-plugins-dependencies . 2>/dev/null || true
+          # Restore our custom files
+          rm -rf lib/
           cp -r /tmp/lib_backup/ lib/
           cp /tmp/pubspec_backup.yaml pubspec.yaml
 
       - name: Resolve Dependencies
-        run: flutter pub get || echo "dependencies resolved"
+        run: flutter pub get || echo "deps ok"
 
       - name: Build APK (Release)
-        run: |
-          flutter build apk --release --build-number=${{ github.run_number }}
+        run: flutter build apk --release --build-number=${{ github.run_number }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
