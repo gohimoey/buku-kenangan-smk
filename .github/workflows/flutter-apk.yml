@@ -19,6 +19,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -83,3 +86,12 @@ jobs:
             build/app/outputs/flutter-apk/release/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify n8n Webhook
+        if: github.event_name == 'push'
+        run: |
+          RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${GITHUB_RUN_NUMBER}"
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -d "{\"event\":\"apk_build\",\"app\":\"buku-kenangan-smk\",\"tag\":\"v${GITHUB_RUN_NUMBER}\",\"repository\":\"${GITHUB_REPOSITORY}\",\"release_url\":\"${RELEASE_URL}\"}" \
+            https://n8n.gohim.vip/webhook/flutter-apk-notification
