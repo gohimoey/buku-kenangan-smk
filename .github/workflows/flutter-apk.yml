@@ -62,7 +62,7 @@ jobs:
 
       - name: Create Git Tag
         if: github.event_name != 'pull_request'
-        run: ./scripts/create-release.sh
+        run: bash scripts/create-release.sh
         env:
           PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
