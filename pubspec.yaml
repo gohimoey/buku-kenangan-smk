@@ -1,18 +1,14 @@
 name: buku_kenangan_smk
-description: Aplikasi Buku Kenangan SMK IHYAUL ULUM - simpan foto, catatan, dan QR code kenangan sekolah.
-publish_to: https://github.com/gohimoey/buku-kenangan-smk
-version: 1.0.0
+description: Buku Kenangan SMK IHYAUL ULUM
+publish_to: 'none'
+version: 1.0.0+1
+
 environment:
   sdk: '>=3.3.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  sqflite: ^2.3.0
-  path_provider: ^2.1.1
-  image_picker: ^1.0.7
-  qr_flutter: ^4.10.0
-  path: ^1.8.3
 
 dev_dependencies:
   flutter_test:
@@ -21,9 +17,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
-  fonts:
-    - family: Arial
-      fonts:
-        - asset: fonts/Arial.ttf
