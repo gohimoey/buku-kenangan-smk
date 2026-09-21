@@ -5,14 +5,17 @@ on:
 
 jobs:
   build-apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # cmake built-in, ninja via apt
     steps:
       - uses: actions/checkout@v4
+
+      - name: 🛠️ Install System Deps
+        run: sudo apt-get update && sudo apt-get install -y ninja-build unzip
 
       - name: 🛠️ Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.19.6'  # stable, proven
           channel: 'stable'
 
       - name: 💾 Backup sources
@@ -20,12 +23,12 @@ jobs:
           mkdir -p /tmp/backup
           cp -r lib/ /tmp/backup/
           cp pubspec.yaml /tmp/backup/
+          rm -rf lib/ pubspec.yaml
 
       - name: 🏗️ Create Android skeleton
         run: |
           flutter create --org com.smkiuh .
           cp -f /tmp/backup/pubspec.yaml .
-          rm -rf lib/
           cp -rf /tmp/backup/lib/ ./lib/
 
       - name: 🔧 Install dependencies
