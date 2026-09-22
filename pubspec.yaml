@@ -30,8 +30,3 @@ flutter:
     - family: MastaGohim
       fonts:
         - file: fonts/Inter-Regular.ttf
-
-# App Branding
-application:
-  name: Masta Gohim
-  package: com.mastagohim.bukukenangan
