@@ -25,6 +25,11 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
 
+      - name: Verify project structure
+        run: |
+          ls -la android/gradlew
+          ls -la android/app/build.gradle
+
       - name: Install unzip
         run: sudo apt-get update && sudo apt-get install -y unzip
 
@@ -39,6 +44,7 @@ jobs:
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
+          cache: false
 
       - name: Flutter Doctor
         run: flutter doctor -v
@@ -96,7 +102,7 @@ jobs:
       - name: Notify n8n Webhook
         if: success()
         run: |
-          TAG=$(gh release view --json tagName --jq '.tagName' 2>/dev/null || echo 'v${{ github.run_number }}')
+          TAG=$(gh release view --json tagName --jq '.tagName' 2>/dev/null || echo "v${GITHUB_RUN_NUMBER}")
           RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
           PAYLOAD=$(printf '{"app":"buku-kenangan-smk","tag":"%s","repository":"%s","release_url":"%s"}' "$TAG" "$GITHUB_REPOSITORY" "$RELEASE_URL")
           curl -s -X POST "https://n8n.gohim.vip/webhook/flutter-apk-notification" \
