@@ -93,10 +93,11 @@ jobs:
           token: ${{ secrets.PAT_TOKEN }}
 
       - name: Notify n8n Webhook
-        if: always()
+        if: success()
         run: |
-          RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/v${GITHUB_RUN_NUMBER}"
-          curl -X POST \
+          TAG=$(gh release view --json tagName --jq '.tagName' 2>/dev/null || echo 'v${{ github.run_number }}')
+          RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+          PAYLOAD=$(printf '{"app":"buku-kenangan-smk","tag":"%s","repository":"%s","release_url":"%s"}' "$TAG" "$GITHUB_REPOSITORY" "$RELEASE_URL")
+          curl -s -X POST "https://n8n.gohim.vip/webhook/flutter-apk-notification" \
             -H "Content-Type: application/json" \
-            -d "{\"event\":\"apk_build\",\"app\":\"buku-kenangan-smk\",\"tag\":\"v${GITHUB_RUN_NUMBER}\",\"repository\":\"${GITHUB_REPOSITORY}\",\"release_url\":\"${RELEASE_URL}\"}" \
-            https://n8n.gohim.vip/webhook/flutter-apk-notification
+            -d "$PAYLOAD"
